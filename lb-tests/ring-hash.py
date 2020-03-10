@@ -29,7 +29,7 @@ for x in echo_cluster['host_statuses']:
     distribution_count[instance_id] = 0
 
 id_key = uuid.uuid4()
-req = urllib.request.Request("%s:%s/echo" % (host, envoy_port), headers={'id_key': str(id_key)})
+req = urllib.request.Request("%s:%s/echo/key/%s" % (host, envoy_port, id_key))
 
 for x in range(500):
     response = str(urllib.request.urlopen(req).read())
