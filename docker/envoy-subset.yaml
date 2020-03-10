@@ -1,0 +1,90 @@
+node:
+  id: envoy-id
+  cluster: envoy-cluster
+admin:
+  access_log_path: /dev/stdout
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+static_resources:
+  listeners:
+    - name: main
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 8080 }
+      filter_chains:
+      - filters:
+        - name: envoy.http_connection_manager
+          typed_config:
+            "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+            stat_prefix: echo
+            codec_type: AUTO
+            route_config:
+              name: local_route
+              virtual_hosts:
+              - name: local_service
+                domains: ["*"]
+                routes:
+                - match: { prefix: "/echo" }
+                  route: { cluster: echo_cluster }
+            http_filters:
+            - name: envoy.lua
+              typed_config:
+                "@type": type.googleapis.com/envoy.config.filter.http.lua.v2.Lua
+                inline_code: |
+                  function envoy_on_request(request)
+                    hasInstanceId = "/echo/instance/(.+)/?.*"
+
+                    path = request:headers():get(":path")
+                    key = path:match(hasInstanceId)
+
+                    if key ~= nil then
+                      request:headers():add("instance-id", key)
+                    end
+                  end
+            - name: envoy.filters.http.header_to_metadata
+              config:
+                request_rules:
+                  - header: instance-id
+                    on_header_present:
+                      metadata_namespace: envoy.lb
+                      key: instance_id
+                      type: STRING
+            - name: envoy.router
+
+  clusters:
+    - name: echo_cluster
+      lb_policy: ROUND_ROBIN
+      lb_subset_config:
+        fallback_policy: ANY_ENDPOINT
+        subset_selectors:
+        - keys:
+          - instance_id
+      connect_timeout: 3s
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      load_assignment:
+        cluster_name: echo_cluster
+        endpoints:
+        - lb_endpoints:
+          - endpoint:
+              address:
+                socket_address:
+                  address: docker.for.mac.localhost
+                  port_value: 8081
+            metadata:
+              filter_metadata: { "envoy.lb" : { "instance_id": "a29f0fba3451"}} # instance_id should be replaced with echo-server actual container id
+          - endpoint:
+              address:
+                socket_address:
+                  address: docker.for.mac.localhost
+                  port_value: 8082
+            metadata:
+              filter_metadata: { "envoy.lb" : { "instance_id": "d6325ed590c0"}}
+          - endpoint:
+              address:
+                socket_address:
+                  address: docker.for.mac.localhost
+                  port_value: 8083
+            metadata:
+              filter_metadata: { "envoy.lb" : { "instance_id": "6e2f60a09101"}}

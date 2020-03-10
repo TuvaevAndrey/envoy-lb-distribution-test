@@ -14,6 +14,7 @@ envoy_admin_port = "9901"
 envoy_admin_url = "%s:%s/clusters?format=json" % (host, envoy_admin_port)
 
 cluster_name = "echo_cluster"
+container_id = "a29f0fba3451"
 
 # get all instance_ids
 response = json.loads(urllib.request.urlopen(envoy_admin_url).read())
@@ -28,7 +29,7 @@ for x in echo_cluster['host_statuses']:
     distribution_count[instance_id] = 0
 
 id_key = uuid.uuid4()
-req = urllib.request.Request("%s:%s/echo" % (host, envoy_port))
+req = urllib.request.Request("%s:%s/echo/instance/%s" % (host, envoy_port, container_id))
 
 # fill distribution dict
 for x in range(500):

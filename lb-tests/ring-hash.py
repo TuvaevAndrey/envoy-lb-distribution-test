@@ -21,7 +21,6 @@ echo_cluster = next(x for x in response['cluster_statuses'] if x['name'] == clus
 
 distribution_count = {}
 
-# fill distribution dict
 for x in echo_cluster['host_statuses']:
     port = x['address']['socket_address']['port_value']
     response = str(urllib.request.urlopen("%s:%s" % (host, port)).read())
@@ -31,6 +30,7 @@ for x in echo_cluster['host_statuses']:
 id_key = uuid.uuid4()
 req = urllib.request.Request("%s:%s/echo/key/%s" % (host, envoy_port, id_key))
 
+# fill distribution dict
 for x in range(500):
     response = str(urllib.request.urlopen(req).read())
     instance_id = response[20:32]
