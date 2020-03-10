@@ -1,0 +1,63 @@
+node:
+  id: envoy-id
+  cluster: envoy-cluster
+admin:
+  access_log_path: /dev/stdout
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+static_resources:
+  listeners:
+    - name: main
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 8080 }
+      filter_chains:
+      - filters:
+        - name: envoy.http_connection_manager
+          typed_config:
+            "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+            stat_prefix: echo
+            codec_type: AUTO
+            route_config:
+              name: local_route
+              virtual_hosts:
+              - name: local_service
+                domains: ["*"]
+                routes:
+                - match: { prefix: "/echo" }
+                  route: {
+                     cluster: echo_cluster, 
+                       hash_policy: { 
+                         header: { 
+                           header_name: id_key
+                        }
+                      }
+                    }
+            http_filters:
+            - name: envoy.router
+  clusters:
+    - name: echo_cluster
+      lb_policy: RING_HASH
+      connect_timeout: 3s
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      load_assignment:
+        cluster_name: echo_cluster
+        endpoints:
+        - lb_endpoints:
+          - endpoint:
+              address:
+                socket_address:
+                  address: docker.for.mac.localhost
+                  port_value: 8081
+          - endpoint:
+              address:
+                socket_address:
+                  address: docker.for.mac.localhost
+                  port_value: 8082
+          - endpoint:
+              address:
+                socket_address:
+                  address: docker.for.mac.localhost
+                  port_value: 8083
