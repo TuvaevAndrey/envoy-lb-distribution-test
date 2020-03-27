@@ -2,7 +2,7 @@
 ---
 Distribution test examples for Envoy.
 
-* docker dictionary contains `dockerfile` and `envoy.yaml` for different balancing cases 
+* docker directory contains `dockerfile` and `envoy.yaml` for different balancing cases 
 * lb-tests contains `.py` scripts, which provide distribution result histograms
 ---
 As an upstream it is suggested to use [echo-server](https://github.com/jmalloc/echo-server).
