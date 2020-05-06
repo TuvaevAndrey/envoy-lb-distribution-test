@@ -1,6 +1,6 @@
 # envoy-lb-distribution-test
 ---
-Distribution test examples for Envoy.
+Distribution test examples for article https://habr.com/ru/company/tinkoff/blog/494298/. 
 
 * docker directory contains `dockerfile` and `envoy.yaml` for different balancing cases 
 * lb-tests contains `.py` scripts, which provide distribution result histograms
